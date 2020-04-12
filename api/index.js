@@ -54,6 +54,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    io.emit('disconnect');
     delete users[socket.id];
   });
 });

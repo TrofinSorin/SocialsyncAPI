@@ -1,1 +1,1 @@
-## Rosocial APP
+## Socialsync APP
