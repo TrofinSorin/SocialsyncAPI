@@ -8,9 +8,10 @@ module.exports = {
         "treatUndefinedAsUnspecified": true,
         "arrow-body-style": 0,
         "comma-dangle": 0,
-        "linebreak-style": 0
+        "linebreak-style": 0,
+        "func-names": ["error", "always", { "generators": "as-needed" }],
+        "prefer-arrow-callback": "error"
       },
-
       "env": {
         "commonjs": true,
         "node": true,

@@ -52,20 +52,21 @@ class UserController {
   }
 
   static async updatedUser(req, res) {
-    const alteredBook = req.body;
+    const userData = req.body;
     const { id } = req.params;
     if (!Number(id)) {
       util.setError(400, 'Please input a valid numeric value');
       return util.send(res);
     }
+
     try {
-      const updateBook = await UserService.updateBook(id, alteredBook);
-      if (!updateBook) {
+      const updatedUser = await UserService.updateUser(id, userData);
+      if (!updatedUser) {
         util.setError(404, `Cannot find book with the id: ${id}`);
       } else {
-        util.setSuccess(200, 'Book updated', updateBook);
+        util.setSuccess(200, 'User updated', updatedUser);
       }
-      
+ 
       return util.send(res);
     } catch (error) {
       util.setError(404, error);

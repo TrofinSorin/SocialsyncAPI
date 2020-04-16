@@ -8,9 +8,12 @@ module.exports = (sequelize, DataTypes) => {
     username: DataTypes.STRING,
     password: DataTypes.STRING,
     confirmpassword: DataTypes.STRING,
+    resetPasswordToken: DataTypes.STRING,
+    resetPasswordExpires: DataTypes.DATE,
     firstname: DataTypes.STRING,
     lastname: DataTypes.STRING,
-    avatar: DataTypes.STRING
+    avatar: DataTypes.STRING,
+    lastlogin: DataTypes.DATE
   }, {
     timestamps: false,
     underscored: true,

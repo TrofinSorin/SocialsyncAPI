@@ -30,15 +30,11 @@ class UserService {
   static async updateUser(id, updateUser) {
     try {
       const UserToUpdate = await database.User.findOne({
-        where: { id: Number(id) }
+        where: { id }
       });
 
-      if (UserToUpdate) {
-        await database.User.update(updateUser, { where: { id: Number(id) } });
-
-        return updateUser;
-      }
-      return null;
+      console.log('updateUser.dataValues:', updateUser)
+      return UserToUpdate && await database.User.update(updateUser, { where: { id } });
     } catch (error) {
       throw error;
     }
@@ -67,6 +63,18 @@ class UserService {
         return deletedUser;
       }
       return null;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async forgotPasswordUser(username) {
+    try {
+      const theUser = await database.User.findOne({
+        where: { username }
+      });
+
+      return theUser;
     } catch (error) {
       throw error;
     }
