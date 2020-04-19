@@ -1,5 +1,8 @@
 import database from '../src/models';
 
+const { Op } = require('sequelize');
+const moment = require('moment');
+
 class UserService {
   static async getAllUsers() {
     try {
@@ -33,9 +36,21 @@ class UserService {
         where: { id }
       });
 
-      console.log('updateUser.dataValues:', updateUser)
       return UserToUpdate && await database.User.update(updateUser, { where: { id } });
     } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAUserByToken(id, resetPasswordToken) {
+    try {
+      const theUser = await database.User.findOne({
+        where: { id, resetPasswordToken, resetPasswordExpires: { [Op.gt]: moment().format() } }
+      });
+      
+      return theUser;
+    } catch (error) {
+      console.log('error:', error);
       throw error;
     }
   }

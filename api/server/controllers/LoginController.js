@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const async = require('async');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const moment = require('moment');
 
 class LoginController {
   static async loginUser(req, res) {
@@ -26,7 +27,6 @@ class LoginController {
 
         await UserService.updateUser(loginUser.id, loginUser.dataValues);
 
-        console.log('userData:', userData);
         util.setSuccess(200, 'Users retrieved', userData);
       } else {
         util.setError(401, 'User or Password incorect');
@@ -58,7 +58,7 @@ class LoginController {
         }
 
         userDetails.resetPasswordToken = token;
-        userDetails.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        userDetails.resetPasswordExpires = moment().add(1, 'hours').format(); // 1 hour
 
         const updatedUser = await UserService.updateUser(userDetails.id, userDetails.dataValues);
 
@@ -85,11 +85,10 @@ class LoginController {
           subject: 'SocialSync Password Reset',
           text: `${'You are receiving this because you have requested the reset of the password '
           + 'Please click on the following link, or paste this into your browser to complete the process of reseting your password \n'
-          + 'http://' + 'localhost:3000' + '/set-password/'}${userDetails.id}/${token}`
+          + 'http://' + 'localhost:3000' + '/security/set-password/'}${userDetails.id}/${token}`
         };
 
         smtpTransport.sendMail(mailOptions, (err) => {
-          console.log('err:', err)
           console.log('mail sent');
 
           util.setSuccess(200, `An e-mail has been sent to ${user.email} with further instructions`);
@@ -103,6 +102,27 @@ class LoginController {
         util.send(res);
       }
     });
+  }
+
+
+  static async getTokenValidation(req, res) {
+    const { token, id } = req.params;
+
+    try {
+      const user = await UserService.getAUserByToken(id, token);
+     
+      if (!user) {
+        util.setError(401, 'Password reset token is invalid or has expired');
+      } else {
+        util.setSuccess(200, 'Found User', user);
+      }
+
+      return util.send(res);
+    } catch (error) {
+      util.setError(500, error);
+
+      return util.send(res);
+    }
   }
 }
 

@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     avatar: DataTypes.STRING,
     lastlogin: DataTypes.DATE
   }, {
-    timestamps: false,
+    timestamps: true,
     underscored: true,
   });
   return User;
