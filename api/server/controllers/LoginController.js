@@ -141,13 +141,11 @@ class LoginController {
 
     async.waterfall([
       async (done) => {
-        console.log('req.body:', req.body)
-        const updatedUser = await UserService.updateUser(user.id, user.dataValues)
-          
+        const updatedUser = await UserService.updateUser(user.id, user.dataValues);
+
         done(null, updatedUser);
       },
       (userDetails, done) => {
-        console.log('userDetails:', userDetails)
         const smtpTransport = nodemailer.createTransport({
           service: 'Gmail',
           secure: false, // use SSL
