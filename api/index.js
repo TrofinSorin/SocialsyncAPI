@@ -60,8 +60,8 @@ io.on('connection', (socket) => {
 });
 
 
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(cors());
 
 const port = process.env.PORT || 8000;

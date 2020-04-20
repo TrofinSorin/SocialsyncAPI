@@ -46,7 +46,7 @@ class LoginController {
       (done) => {
         crypto.randomBytes(20, (err, buf) => {
           const token = buf.toString('hex');
-        
+
           done(err, token);
         });
       },
@@ -89,8 +89,6 @@ class LoginController {
         };
 
         smtpTransport.sendMail(mailOptions, (err) => {
-          console.log('mail sent');
-
           util.setSuccess(200, `An e-mail has been sent to ${user.email} with further instructions`);
           done(err, 'done');
           util.send(res);
@@ -110,7 +108,7 @@ class LoginController {
 
     try {
       const user = await UserService.getAUserByToken(id, token);
-     
+
       if (!user) {
         util.setError(401, 'Password reset token is invalid or has expired');
       } else {
@@ -123,6 +121,67 @@ class LoginController {
 
       return util.send(res);
     }
+  }
+
+  static async changePassword(req, res) {
+    const { token, id } = req.body;
+
+    const user = await UserService.getAUserByToken(id, token);
+
+    if (req.body.password === req.body.confirmpassword) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      user.password = bcrypt.hashSync(req.body.password);
+      user.confirmpassword = bcrypt.hashSync(req.body.confirmpassword);
+    } else {
+      util.setError(400, 'Password do not match.');
+
+      return;
+    }
+
+    async.waterfall([
+      async (done) => {
+        console.log('req.body:', req.body)
+        const updatedUser = await UserService.updateUser(user.id, user.dataValues)
+          
+        done(null, updatedUser);
+      },
+      (userDetails, done) => {
+        console.log('userDetails:', userDetails)
+        const smtpTransport = nodemailer.createTransport({
+          service: 'Gmail',
+          secure: false, // use SSL
+          auth: {
+            user: 'socialsync93@gmail.com',
+            pass: 'ghnyqhonalumodxa'
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
+        const mailOptions = {
+          to: user.username,
+          from: 'socialsync93@gmail.com',
+          subject: 'Your SocialSync Password has been Changed',
+          text: `Hello!
+          This is a confirmation that the password for your account ${user.username} has been changed.`
+        };
+
+        console.log('mailOptions', mailOptions);
+
+        smtpTransport.sendMail(mailOptions, (err) => {
+          util.setSuccess(200, `An e-mail has been sent to ${user.username}`);
+          done(err, 'done');
+          util.send(res);
+        });
+      }
+    ], (err) => {
+      if (err) {
+        util.setError(400, err);
+        util.send(res);
+      }
+    });
   }
 }
 

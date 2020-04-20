@@ -66,7 +66,7 @@ class UserController {
       } else {
         util.setSuccess(200, 'User updated', updatedUser);
       }
- 
+
       return util.send(res);
     } catch (error) {
       util.setError(404, error);

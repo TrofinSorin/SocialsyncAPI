@@ -47,10 +47,9 @@ class UserService {
       const theUser = await database.User.findOne({
         where: { id, resetPasswordToken, resetPasswordExpires: { [Op.gt]: moment().format() } }
       });
-      
+
       return theUser;
     } catch (error) {
-      console.log('error:', error);
       throw error;
     }
   }
