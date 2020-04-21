@@ -45,6 +45,11 @@ io.on('connection', (socket) => {
     io.emit('roomJoined', room);
   });
 
+  socket.on('createRoom', async (room) => {
+    socket.join(room);
+    io.emit('roomJoined', room);
+  });
+
   socket.on('leaveRoom', async (room) => {
     socket.leave(room);
   });
@@ -63,6 +68,14 @@ io.on('connection', (socket) => {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
+app.use((req, res, next) => {
+  if (!('JSONResponse' in res)) {
+    return next();
+  }
+
+  res.set('Cache-Control', 'public, max-age=31557600');
+  res.json(res.JSONResponse);
+});
 
 const port = process.env.PORT || 8000;
 
