@@ -26,6 +26,7 @@ io.on('connection', (socket) => {
     console.log(`a user ${data.userId} connected`);
     // saving userId to array with socket ID
     users[socket.id] = data.userId;
+    console.log('data.userId:', data.userId);
   });
 
   socket.on('getOnlineUsers', () => {
@@ -37,7 +38,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg) => {
-    io.to(msg.room).emit('chat message', msg);
+    io.emit('chat message', msg);
   });
 
   socket.on('createRoom', async (room) => {
@@ -68,14 +69,7 @@ io.on('connection', (socket) => {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
-app.use((req, res, next) => {
-  if (!('JSONResponse' in res)) {
-    return next();
-  }
 
-  res.set('Cache-Control', 'public, max-age=31557600');
-  res.json(res.JSONResponse);
-});
 
 const port = process.env.PORT || 8000;
 

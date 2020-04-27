@@ -9,7 +9,7 @@ module.exports = {
   // },
 
   development: {
-    database: 'react',
+    database: 'socialsyncs',
     username: 'postgres',
     password: 'sorin',
     host: '127.0.0.1',
@@ -17,7 +17,7 @@ module.exports = {
   },
 
   test: {
-    database: 'react',
+    database: 'socialsyncs',
     username: 'postgres',
     password: 'sorin',
     host: '127.0.0.1',

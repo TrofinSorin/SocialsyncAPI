@@ -82,7 +82,7 @@ class LoginController {
         const mailOptions = {
           to: user.username,
           from: 'socialsync93@gmail.com',
-          subject: 'SocialSync Password Reset',
+          subject: 'SocialSyncs Password Reset',
           text: `${'You are receiving this because you have requested the reset of the password '
           + 'Please click on the following link, or paste this into your browser to complete the process of reseting your password \n'
           + 'http://' + 'localhost:3000' + '/security/set-password/'}${userDetails.id}/${token}`
@@ -161,7 +161,7 @@ class LoginController {
         const mailOptions = {
           to: user.username,
           from: 'socialsync93@gmail.com',
-          subject: 'Your SocialSync Password has been Changed',
+          subject: 'Your SocialSyncs Password has been Changed',
           text: `Hello!
           This is a confirmation that the password for your account ${user.username} has been changed.`
         };
