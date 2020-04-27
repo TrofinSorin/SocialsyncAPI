@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import userRoutes from './server/routes/UserRoutes';
 import loginRoutes from './server/routes/LoginRoutes';
 import securedRoutes from './server/routes/securedRoutes';
+import messageRoutes from './server/routes/MessageRoutes';
 
 const Ioport = 8001;
 
@@ -38,7 +39,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
+    console.log('msg:', msg.fromSocket, msg.to);
+    if (msg.to) {
+      io.to(msg.to).emit('chat message', msg);
+    }
+
+    if (msg.fromSocket) {
+      io.to(msg.fromSocket).emit('chat message', msg);
+    }
   });
 
   socket.on('createRoom', async (room) => {
@@ -76,6 +84,7 @@ const port = process.env.PORT || 8000;
 app.use('/api/v1/secured/users', securedRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/', loginRoutes);
+app.use('/api/v1/messages', messageRoutes);
 
 // when a random route is inputed
 app.get('*', (req, res) => res.status(200).send({
