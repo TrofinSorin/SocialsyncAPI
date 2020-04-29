@@ -21,6 +21,7 @@ const io = socketIo(server);
 io.listen(Ioport);
 
 const users = {};
+const rooms = {};
 
 io.on('connection', (socket) => {
   socket.on('login', (data) => {
@@ -39,13 +40,30 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg) => {
-    console.log('msg:', msg.fromSocket, msg.to);
-    if (msg.to) {
-      io.to(msg.to).emit('chat message', msg);
-    }
+    if (msg.to && msg.fromSocket) {
+      rooms[`${msg.fromUser.id}-${msg.toUser.id}`] = `${msg.fromUser.id}-${msg.toUser.id}`;
 
-    if (msg.fromSocket) {
-      io.to(msg.fromSocket).emit('chat message', msg);
+      const roomToJoin = rooms[`${msg.fromUser.id}-${msg.toUser.id}`];
+      const sockets = {};
+      sockets[msg.to] = msg.to;
+      sockets[msg.fromSocket] = msg.fromSocket;
+
+      Object.keys(users).forEach((key) => {
+        if (sockets[key]) {
+          console.log('sockets key', sockets[key]);
+          io.sockets.connected[sockets[key]].join(roomToJoin);
+        }
+      });
+
+      io.to(roomToJoin).emit('chat message', msg);
+    } else {
+      if (msg.to) {
+        io.to(msg.to).emit('chat message', msg);
+      }
+
+      if (msg.fromSocket) {
+        io.to(msg.fromSocket).emit('chat message', msg);
+      }
     }
   });
 
