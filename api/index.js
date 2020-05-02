@@ -4,6 +4,7 @@ import userRoutes from './server/routes/UserRoutes';
 import loginRoutes from './server/routes/LoginRoutes';
 import securedRoutes from './server/routes/securedRoutes';
 import messageRoutes from './server/routes/MessageRoutes';
+import MessageService from './server/services/MessageService';
 
 const Ioport = 8001;
 
@@ -40,6 +41,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg) => {
+    console.log('msg.to:', msg.to)
+    console.log('msg.fromSocket:', msg.fromSocket)
     if (msg.to && msg.fromSocket) {
       rooms[`${msg.fromUser.id}-${msg.toUser.id}`] = `${msg.fromUser.id}-${msg.toUser.id}`;
 
@@ -65,6 +68,16 @@ io.on('connection', (socket) => {
         io.to(msg.fromSocket).emit('chat message', msg);
       }
     }
+  });
+
+  socket.on('getMessages', async (data) => {
+    const getAllMessagesLimit = await MessageService.getConversationLimit(data.fromId, data.toId);
+    const totalPages = Math.ceil(getAllMessagesLimit[0].count / process.env.MESSAGES_LIMIT);
+    console.log('totalPages:', totalPages);
+
+    const allMessages = await MessageService.getMessagesByFromUser(data.fromId, data.toId);
+
+    io.to(data.socket).emit('receiveMessages', JSON.parse(JSON.stringify(allMessages)));
   });
 
   socket.on('createRoom', async (room) => {

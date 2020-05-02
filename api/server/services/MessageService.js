@@ -1,7 +1,8 @@
 import database from '../src/models';
 
-const { Op } = require('sequelize');
-const moment = require('moment');
+// const { Op } = require('sequelize');
+// const moment = require('moment');
+const { QueryTypes } = require('sequelize');
 
 class MessageService {
   static async addMessage(message) {
@@ -12,10 +13,23 @@ class MessageService {
     }
   }
 
-  static async getMessagesByFromUser(id) {
+  static async getConversationLimit(fromId, toId) {
     try {
-      return await database.Message.findOne({
-        where: { id }
+      return await database.sequelize.query(`SELECT COUNT(id) from messages WHERE (from_user_id=${fromId} AND to_user_id = ${toId}) OR (from_user_id=${toId} AND to_user_id=${fromId})`, {
+        type: QueryTypes.SELECT
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getMessagesByFromUser(fromId, toId, page) {
+    const limit = page ? page * process.env.MESSAGES_LIMIT : 0;
+    console.log('limit:', limit);
+
+    try {
+      return await database.sequelize.query(`SELECT * from messages WHERE (from_user_id=${fromId} AND to_user_id = ${toId}) OR (from_user_id=${toId} AND to_user_id=${fromId}) ORDER BY created_at DESC LIMIT ${process.env.MESSAGES_LIMIT} OFFSET ${limit}`, {
+        type: QueryTypes.SELECT
       });
     } catch (error) {
       throw error;
