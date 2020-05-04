@@ -24,12 +24,23 @@ io.listen(Ioport);
 const users = {};
 const rooms = {};
 
+function generateRoomId(string) {
+  const output = string.split('-');
+
+  const result = output.map((item) => {
+    return parseInt(item, 10);
+  }).sort((a, b) => {
+    return a - b;
+  }).join('-');
+
+  return result;
+}
+
 io.on('connection', (socket) => {
   socket.on('login', (data) => {
     console.log(`a user ${data.userId} connected`);
     // saving userId to array with socket ID
-    users[socket.id] = data.userId;
-    console.log('data.userId:', data.userId);
+    users[data.userId] = socket.id;
   });
 
   socket.on('getOnlineUsers', () => {
@@ -40,32 +51,39 @@ io.on('connection', (socket) => {
     io.emit('getOnlineUsers', users);
   });
 
-  socket.on('chat message', (msg) => {
-    console.log('msg.to:', msg.to)
-    console.log('msg.fromSocket:', msg.fromSocket)
-    if (msg.to && msg.fromSocket) {
-      rooms[`${msg.fromUser.id}-${msg.toUser.id}`] = `${msg.fromUser.id}-${msg.toUser.id}`;
+  socket.on('chat message', (msgData) => {
+    const fromUserSocket = users[msgData.fromUser.id];
+    const toUserSocket = users[msgData.toUser.id];
+    let roomToJoin;
 
-      const roomToJoin = rooms[`${msg.fromUser.id}-${msg.toUser.id}`];
-      const sockets = {};
-      sockets[msg.to] = msg.to;
-      sockets[msg.fromSocket] = msg.fromSocket;
+    if (fromUserSocket && toUserSocket) {
+      rooms[generateRoomId(`${msgData.fromUser.id}-${msgData.toUser.id}`)] = [fromUserSocket, toUserSocket];
 
-      Object.keys(users).forEach((key) => {
-        if (sockets[key]) {
-          console.log('sockets key', sockets[key]);
-          io.sockets.connected[sockets[key]].join(roomToJoin);
+      Object.keys(rooms).forEach((item) => {
+        if (rooms[item].includes(fromUserSocket && toUserSocket)) {
+          roomToJoin = item;
         }
       });
 
-      io.to(roomToJoin).emit('chat message', msg);
+      const socketsToConnectTo = {};
+      socketsToConnectTo[fromUserSocket] = fromUserSocket;
+      socketsToConnectTo[toUserSocket] = toUserSocket;
+
+      Object.keys(socketsToConnectTo).forEach((key) => {
+        io.sockets.connected[socketsToConnectTo[key]].join(roomToJoin);
+      });
+
+      console.log('io.sockets.manager.roomClients[socket.id]', io.sockets.adapter.sids);
+      console.log('roomsToJOIN', rooms);
+
+      io.to(roomToJoin).emit('chat message', msgData);
     } else {
-      if (msg.to) {
-        io.to(msg.to).emit('chat message', msg);
+      if (users[msgData.toUser.id]) {
+        io.to(users[msgData.toUser.id]).emit('chat message', msgData);
       }
 
-      if (msg.fromSocket) {
-        io.to(msg.fromSocket).emit('chat message', msg);
+      if (users[msgData.fromUser.id]) {
+        io.to(users[msgData.fromUser.id]).emit('chat message', msgData);
       }
     }
   });
@@ -73,11 +91,9 @@ io.on('connection', (socket) => {
   socket.on('getMessages', async (data) => {
     const getAllMessagesLimit = await MessageService.getConversationLimit(data.fromId, data.toId);
     const totalPages = Math.ceil(getAllMessagesLimit[0].count / process.env.MESSAGES_LIMIT);
-    console.log('totalPages:', totalPages);
-
     const allMessages = await MessageService.getMessagesByFromUser(data.fromId, data.toId);
 
-    io.to(data.socket).emit('receiveMessages', JSON.parse(JSON.stringify(allMessages)));
+    io.to(users[data.fromId]).emit('receiveMessages', JSON.parse(JSON.stringify(allMessages)));
   });
 
   socket.on('createRoom', async (room) => {
@@ -100,15 +116,26 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     io.emit('disconnect');
-    delete users[socket.id];
+
+    Object.keys(users).forEach((item) => {
+      if (users[item] === socket.id) {
+        delete users[item];
+
+        Object.keys(rooms).forEach((key) => {
+          if (rooms[key].includes(socket.id)) {
+            delete rooms[key];
+          }
+        });
+      }
+    });
+
+    console.log('Final Rooms', rooms);
   });
 });
-
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
-
 
 const port = process.env.PORT || 8000;
 
@@ -125,6 +152,7 @@ app.get('*', (req, res) => res.status(200).send({
 app.listen(port, () => {
   console.log(`Server is running on PORT ${port}`);
 });
+
 
 module.exports.bcrypt = { bcrypt };
 

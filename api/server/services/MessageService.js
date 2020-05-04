@@ -25,7 +25,6 @@ class MessageService {
 
   static async getMessagesByFromUser(fromId, toId, page) {
     const limit = page ? page * process.env.MESSAGES_LIMIT : 0;
-    console.log('limit:', limit);
 
     try {
       return await database.sequelize.query(`SELECT * from messages WHERE (from_user_id=${fromId} AND to_user_id = ${toId}) OR (from_user_id=${toId} AND to_user_id=${fromId}) ORDER BY created_at DESC LIMIT ${process.env.MESSAGES_LIMIT} OFFSET ${limit}`, {
