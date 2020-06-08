@@ -55,26 +55,26 @@ io.on('connection', (socket) => {
     const fromUserSocket = users[msgData.fromUser.id];
     const toUserSocket = users[msgData.toUser.id];
     let roomToJoin;
+    const socketsToConnectTo = {};
 
     if (fromUserSocket && toUserSocket) {
       rooms[generateRoomId(`${msgData.fromUser.id}-${msgData.toUser.id}`)] = [fromUserSocket, toUserSocket];
 
       Object.keys(rooms).forEach((item) => {
-        if (rooms[item].includes(fromUserSocket && toUserSocket)) {
+        if (rooms[item].includes(fromUserSocket) && rooms[item].includes(toUserSocket)) {
           roomToJoin = item;
         }
       });
 
-      const socketsToConnectTo = {};
       socketsToConnectTo[fromUserSocket] = fromUserSocket;
       socketsToConnectTo[toUserSocket] = toUserSocket;
 
-      Object.keys(socketsToConnectTo).forEach((key) => {
-        io.sockets.connected[socketsToConnectTo[key]].join(roomToJoin);
+      rooms[roomToJoin].forEach((socketKey) => {
+        console.log('socketKey:', socketKey);
+        if (io.sockets.connected[socketsToConnectTo[socketKey]]) {
+          io.sockets.connected[socketsToConnectTo[socketKey]].join(roomToJoin);
+        }
       });
-
-      console.log('io.sockets.manager.roomClients[socket.id]', io.sockets.adapter.sids);
-      console.log('roomsToJOIN', rooms);
 
       io.to(roomToJoin).emit('chat message', msgData);
     } else {
@@ -89,11 +89,18 @@ io.on('connection', (socket) => {
   });
 
   socket.on('getMessages', async (data) => {
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', data)
     const getAllMessagesLimit = await MessageService.getConversationLimit(data.fromId, data.toId);
     const totalPages = Math.ceil(getAllMessagesLimit[0].count / process.env.MESSAGES_LIMIT);
-    const allMessages = await MessageService.getMessagesByFromUser(data.fromId, data.toId);
+    const allMessages = await MessageService.getMessagesByFromUser(data.fromId, data.toId, data.page);
+    const payload = {
+      messages: JSON.parse(JSON.stringify(allMessages)),
+      totalPages,
+      limit: getAllMessagesLimit,
+      page: data.page
+    };
 
-    io.to(users[data.fromId]).emit('receiveMessages', JSON.parse(JSON.stringify(allMessages)));
+    io.to(users[data.fromId]).emit('receiveMessages', payload);
   });
 
   socket.on('createRoom', async (room) => {

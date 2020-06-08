@@ -7,12 +7,15 @@ const bcrypt = require('bcryptjs');
 class UserController {
   static async getAllUsers(req, res) {
     try {
-      const allUsers = await UserService.getAllUsers();
+      console.log('req', req.query);
+      const { q } = req.query;
+      console.log('q:', q)
+      const allUsers = await UserService.getAllUsers(q);
 
       if (allUsers.length > 0) {
         util.setSuccess(200, 'Users retrieved', allUsers);
       } else {
-        util.setSuccess(200, 'No book found');
+        util.setSuccess(200, 'Users retrieved', []);
       }
       return util.send(res);
     } catch (error) {

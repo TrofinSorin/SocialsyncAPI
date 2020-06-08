@@ -4,9 +4,15 @@ const { Op } = require('sequelize');
 const moment = require('moment');
 
 class UserService {
-  static async getAllUsers() {
+  static async getAllUsers(query) {
     try {
-      return await database.User.findAll();
+      return await database.User.findAll({
+        where: {
+          firstname: {
+            [Op.like]: `%${query || ''}%`
+          }
+        }
+      });
     } catch (error) {
       throw error;
     }
